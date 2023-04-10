@@ -85,8 +85,7 @@ function transformToVTEXExternalPromotionsDataContract(externalPromotions: Exter
   return {
     version: DataContractVersion.v1,
     type: DataContractType.page,
-    exp: now.setHours(now.getHours() + 1), // this should be the unix time when the promotion becomes invalid
-    cartHash: "cart_hash",
+    exp: now.setHours(now.getHours() + 1), // this should be the unix time when the promotion becomes invalidchoe/
     intendedUser: "intended_user",
     promotions: externalPromotions.promotions,
   }
