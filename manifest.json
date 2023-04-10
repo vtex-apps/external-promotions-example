@@ -1,7 +1,7 @@
 {
   "name": "external-promotions-example",
   "vendor": "vtex",
-  "version": "0.0.0",
+  "version": "0.0.1-beta.0",
   "title": "External Promotions Example",
   "description": "Reference app for handling external promotions in VTEX",
   "mustUpdateAt": "2018-01-04",
