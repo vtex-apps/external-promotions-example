@@ -76,14 +76,14 @@ Provide name of Account to be created.
 **Effect**
 | Property | Type |Required | Desription |
 |---------------------- |------------------------- |-------- | ---------- |
-| type | "nominal" | |The type of discount that is being given. |
-| settings | Settings | |The type of discount that is being given. |
+| type | "nominal" | yes | The type of discount that is being given. |
+| settings | Settings | yes | The definition of the discount itself to be applied. |
 
 **Settings**
 | Property | Type |Required | Desription |
 |---------------------- |------------------------- |-------- | ---------- |
-| value | number | yes|The amount/value of the discount |
-| applyMode | "OnEachItem", "SharedAmongItems" | yes|How the discount will be appliend on the items described in the scope. <br> "OnEachItem" means that the whole amount will be applied to all matching items. <br> "SharedAmongItems" means that the amount will be split and shared evenly among the matching items. |
+| value | number | yes | The amount/value of the discount |
+| applyMode | "OnEachItem", "SharedAmongItems" | yes | How the discount will be appliend on the items described in the scope. <br> "OnEachItem" means that the whole amount will be applied to all matching items. <br> "SharedAmongItems" means that the amount will be split and shared evenly among the matching items. |
 
 **Scope**
 | Property | Type | Required | Desription |
