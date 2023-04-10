@@ -30,12 +30,18 @@ This is a public method that will be called by the storefront customizations and
 | Response             | `application/json`               |
 
 **Request body**
-| Property | Type | Required | Desription |
+| Property | Type | Required | Description |
+|---------------------- |------------------------- | ---------- | ---------- |
+| sessionId | string | yes | The id of the shopper's active session. |
+| promotionalContext | PromotionalContext | yes | The context that should be used for calculating the external promotions. This data is completely customizable and its format is entirely up to the merchant. For the example we'll use a simple array of items with its' sku ids and original prices. |
+
+**PromotionalContext**
+| Property | Type | Required | Description |
 |---------------------- |------------------------- | ---------- | ---------- |
 | items | Item[] | yes | An array of product items that will be used for calculating the external promotions. |
 
 **Item**
-| Property | Type | Required | Desription |
+| Property | Type | Required | Description |
 |---------------------- |------------------------- | ---------- | ---------- |
 | id | string | yes | The unique identifier for the item, aka SKU ID. |
 | sellingPrice | number | yes | The original selling price of the item. By original we mean that we expect this to be the selling price of the item before any discounts are applied |
@@ -46,47 +52,50 @@ Provide name of Account to be created.
 
 ```json
 {
-  "items": [
-    {
-      "id": "1",
-      "sellingPrice": 100
-    }
-  ]
+  "sessionId": "session_id",
+  "promotionalContext": {
+    "items": [
+      {
+        "id": "1",
+        "sellingPrice": 1000
+      }
+    ]
+  }
 }
 ```
 
 **VTEX External Promotions data contract**
 
-| Property     | Type           | Required              | Desription                                                                                                                                                                                      |
-| ------------ | -------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| version      | "v1"           | yes                   | The version of the data contract.                                                                                                                                                               |
-| type         | "page", "cart" | yes                   | The type of the data contract. <br> "page" means that the data being sent is valid for page contexts (PDP/PLP). <br> "cart" means that the data being sent is valid to art contexts (Checkout). |
-| exp          | number         | no                    | The unix time (milliseconds) until the sent data becomes invalid.                                                                                                                               |
-| cartHash     | string         | yes (for "cart" type) | A hash key for the cart in which this promotions data is valid for. This will be used for matching the promotional data when navigating to chekout and when placing the order.                  |
-| intendedUser | string         | yes                   | An unique identifier of the user whose the promotional data is valid to. This will be used for cheking if the promotions are being requested by the correct user.                               |
-| promotions   | Promotion[]    | yes                   | An array of valid promotions that need to be applied for the specified context.                                                                                                                 |
+| Property   | Type           | Required                   | Description                                                                                                                                                                                     |
+| ---------- | -------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| version    | "v1"           | yes                        | The version of the data contract.                                                                                                                                                               |
+| type       | "page", "cart" | yes                        | The type of the data contract. <br> "page" means that the data being sent is valid for page contexts (PDP/PLP). <br> "cart" means that the data being sent is valid to art contexts (Checkout). |
+| exp        | number         | no                         | The unix time (milliseconds) until the sent data becomes invalid.                                                                                                                               |
+| cartHash   | string         | yes (for "cart" type only) | A hash key for the cart in which this promotions data is valid for. This will be used for matching the promotional data when navigating to chekout and when placing the order.                  |
+| sessionId  | string         | yes                        | An unique identifier of the shopper's active session in which the promotional data is valid.                                                                                                    |
+| promotions | Promotion[]    | yes                        | An array of valid promotions that need to be applied for the specified context.                                                                                                                 |
 
 **Promotion**
-| Property | Type |Required | Desription |
+| Property | Type |Required | Description |
 |---------------------- | ------------------------- |-------- | ---------- |
 | identifier | string | yes | An identifier for the promotion. |
 | effect | Effect | yes | The discount definition that will be applied. |
 | scope | Scope[] | yes | The definition of on which items the discount should be applied. |
 
 **Effect**
-| Property | Type |Required | Desription |
+| Property | Type |Required | Description |
 |---------------------- |------------------------- |-------- | ---------- |
 | type | "nominal" | yes | The type of discount that is being given. |
 | settings | Settings | yes | The definition of the discount itself to be applied. |
 
 **Settings**
-| Property | Type |Required | Desription |
+| Property | Type |Required | Description |
 |---------------------- |------------------------- |-------- | ---------- |
 | value | number | yes | The amount/value of the discount |
 | applyMode | "OnEachItem", "SharedAmongItems" | yes | How the discount will be appliend on the items described in the scope. <br> "OnEachItem" means that the whole amount will be applied to all matching items. <br> "SharedAmongItems" means that the amount will be split and shared evenly among the matching items. |
 
 **Scope**
-| Property | Type | Required | Desription |
+| Property | Type | Required | Description |
 |---------------------- |------------------------- | -------- | ---------- |
 | skuId | string | yes |The unique identifier of the item on which the disount should be applied. |
 | quantity | number | yes | The quantity of same items on which the discount should be applied. |
@@ -101,7 +110,7 @@ For more information see the External Promotion Fields Explanation on this [RFC]
   "type": "page",
   "exp": 1680812032408,
   "cartHash": "cart_hash",
-  "intendedUser": "intended_user",
+  "sessionId": "session_id",
   "promotions": [
     {
       "identifier": "mocked-external-promotion",

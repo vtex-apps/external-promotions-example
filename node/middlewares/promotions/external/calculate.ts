@@ -1,8 +1,14 @@
 import { json } from 'co-body'
 
 import { ExternalPromotionsProviderRequest, ExternalPromotionsProviderResponse } from "../../../clients/provider";
+import { DataContractType, DataContractVersion, VTEXExternalPromotionsDataContract } from '../../../clients/vtex-external-promotions-app';
 
 interface CalculateExternalPromotionsRequest {
+  sessionId: string
+  promotionalContext: PromotionalContext
+}
+
+interface PromotionalContext {
   items: Item[]
 }
 
@@ -12,82 +18,37 @@ interface Item {
 }
 
 export async function calculate(ctx: Context, next: () => Promise<any>) {
-  const body: CalculateExternalPromotionsRequest = await json(ctx.req)
+  const { sessionId, promotionalContext }: CalculateExternalPromotionsRequest = await json(ctx.req)
 
   const {
-    clients: { provider },
+    clients: { provider, vtexExternalPromotionsApp },
   } = ctx
 
   const data: ExternalPromotionsProviderRequest = {
-    items: body.items.map(item => ({
+    items: promotionalContext.items.map(item => ({
       sku: item.id,
       price: item.sellingPrice,
     }))
   }
 
-  console.log(JSON.stringify(data, null, 2))
+  const externalPromotionsData = await provider.calculateExternalPromotions(data)
 
-  const response = await provider.calculateExternalPromotions(data)
+  const response = await vtexExternalPromotionsApp.applyExternalPromotions(transformToVTEXExternalPromotionsDataContract(externalPromotionsData, sessionId))
 
+  // this may change when we implment the app on VTEX's side
   ctx.status = 200
-  ctx.body = transformToVTEXExternalPromotionsDataContract(response)
+  ctx.body = response
 
   await next()
 }
 
-interface VTEXExternalPromotionsDataContract {
-  version: DataContractVersion
-  exp: number
-  type: DataContractType
-  intendedUser: string
-  cartHash: string
-  promotions: Promotion[]
-}
-
-enum DataContractVersion {
-  v1 = "v1"
-}
-
-enum DataContractType {
-  cart = "cart",
-  page = "page",
-}
-
-interface Promotion {
-  identifier: string
-  effect: PromotionEffect
-  scope: PromotionScope[]
-}
-
-interface PromotionEffect {
-  type: string
-  settings: PromotionEffectSettings
-}
-
-interface PromotionEffectSettings {
-  value: number
-  applyMode: PromotionEffectSettingsApplyMode
-}
-
-enum PromotionEffectSettingsApplyMode {
-  onEachItem = "OnEachItem",
-  sharedAmongItems = "SharedAmongItems",
-}
-
-interface PromotionScope {
-  skuId: string
-  quantity: number
-}
-
-
-function transformToVTEXExternalPromotionsDataContract(externalPromotions: ExternalPromotionsProviderResponse): VTEXExternalPromotionsDataContract {
+function transformToVTEXExternalPromotionsDataContract(externalPromotions: ExternalPromotionsProviderResponse, sessionId: string): VTEXExternalPromotionsDataContract {
   const now = new Date()
   return {
     version: DataContractVersion.v1,
     type: DataContractType.page,
-    exp: now.setHours(now.getHours() + 1), // this should be the unix time when the promotion becomes invalid
-    cartHash: "cart_hash",
-    intendedUser: "intended_user",
+    exp: now.setHours(now.getHours() + 1), // this should be the unix time when the promotion becomes invalid,
+    sessionId: sessionId,
     promotions: externalPromotions.promotions,
   }
 }
