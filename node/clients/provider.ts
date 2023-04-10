@@ -49,27 +49,4 @@ export class Provider extends AppClient {
       metric: 'calculate-external-promotions',
     })
   }
-
-  public async calculateExternalPromotionsMock(_: ExternalPromotionsProviderRequest): Promise<ExternalPromotionsProviderResponse> {
-    return {
-      "promotions": [
-          {
-              "identifier": "mocked-external-promotion",
-              "effect": {
-                  "type": "nominal",
-                  "settings": {
-                      "value": 90,
-                      "applyMode": PromotionEffectSettingsApplyMode.onEachItem
-                  }
-              },
-              "scope": [
-                  {
-                      "skuId": "1",
-                      "quantity": 1
-                  }
-              ]
-          }
-      ]
-  }
-  }
 }
