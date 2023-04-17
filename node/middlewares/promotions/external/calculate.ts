@@ -31,13 +31,25 @@ export async function calculate(ctx: Context, next: () => Promise<any>) {
     }))
   }
 
-  const externalPromotionsData = await provider.calculateExternalPromotions(data)
+  const externalPromotionsDataResult = await provider.calculateExternalPromotions(data)
+  if (externalPromotionsDataResult.isErr) {
+    console.error(externalPromotionsDataResult.error.message, { data, error: externalPromotionsDataResult.error })
+    ctx.status = 500
+    ctx.body = externalPromotionsDataResult.error.message
+    return await next()
+  }
 
-  const response = await vtexExternalPromotionsApp.applyExternalPromotions(transformToVTEXExternalPromotionsDataContract(externalPromotionsData, sessionId))
+  const applyExternalPromotionsResult = await vtexExternalPromotionsApp.applyExternalPromotions(transformToVTEXExternalPromotionsDataContract(externalPromotionsDataResult.value, sessionId))
+  if (applyExternalPromotionsResult.isErr) {
+    console.error(applyExternalPromotionsResult.error.message, { data, error: applyExternalPromotionsResult.error })
+    ctx.status = 500
+    ctx.body = applyExternalPromotionsResult.error.message
+    return await next()
+  }
 
   // this may change when we implment the app on VTEX's side
   ctx.status = 200
-  ctx.body = response
+  ctx.body = applyExternalPromotionsResult.value
 
   await next()
 }
