@@ -1,4 +1,4 @@
-import { AppClient, InstanceOptions, IOContext } from '@vtex/api'
+import { ExternalClient, InstanceOptions, IOContext } from '@vtex/api'
 
 export interface ExternalPromotionsProviderRequest {
   items: Item[]
@@ -39,14 +39,14 @@ interface PromotionScope {
   quantity: number
 }
 
-export class Provider extends AppClient {
+export class Provider extends ExternalClient {
   constructor(context: IOContext, options?: InstanceOptions) {
-    super('vtex.external-promotions-provider-mock@0.x', context, options)
+    super(`http://${context.workspace}--${context.account}.myvtex.com`, context, options)
   }
 
   public async calculateExternalPromotions(data: ExternalPromotionsProviderRequest) {
     return this.http.post<ExternalPromotionsProviderResponse>('/_v/promotions/calculate', data, {
-      metric: 'calculate-external-promotions',
+      metric: 'calculate-promotions-external-provider',
     })
   }
 }

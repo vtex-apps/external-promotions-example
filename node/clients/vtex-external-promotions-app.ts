@@ -51,6 +51,7 @@ export class VTEXExternalPromotionsApp extends AppClient {
   }
 
   public async applyExternalPromotions(data: VTEXExternalPromotionsDataContract) {
+    return data
     // this may change when we implment the app on VTEX's side
     return this.http.post<any>('/_v/promotions/external/apply', data, {
       metric: 'apply-external-promotions',
