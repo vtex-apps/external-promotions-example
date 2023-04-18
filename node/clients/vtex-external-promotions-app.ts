@@ -1,8 +1,5 @@
 import { AppClient, InstanceOptions, IOContext } from '@vtex/api'
 
-import { Error, ErrorType } from '../utils/errors'
-import { Result } from '../utils/result'
-
 export interface VTEXExternalPromotionsDataContract {
   version: DataContractVersion
   exp: number
@@ -53,12 +50,10 @@ export class VTEXExternalPromotionsApp extends AppClient {
     super('vtex.external-promotions-app@0.x', context, options)
   }
 
-  public async applyExternalPromotions(data: VTEXExternalPromotionsDataContract): Promise<Result<any, Error>> {
+  public applyExternalPromotions(data: VTEXExternalPromotionsDataContract): Promise<any> {
     // this may change when we implment the app on VTEX's side
     return this.http.post<any>('/_v/promotions/external/apply', data, {
       metric: 'apply-external-promotions',
     })
-      .then(response => Result.ok<any, Error>(response))
-      .catch(error => Result.err<any, Error>(new Error(ErrorType.UnexpectedError, "an unexpected error occurred while applying external promotions", error)))
   }
 }
