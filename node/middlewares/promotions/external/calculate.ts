@@ -1,7 +1,17 @@
 import { json } from 'co-body'
 
-import { ExternalPromotionsProviderRequest, ExternalPromotionsProviderResponse } from "../../../clients/provider";
-import { DataContractType, DataContractVersion, VTEXExternalPromotionsDataContract } from '../../../clients/vtex-external-promotions-app';
+import type {
+  ExternalPromotionsProviderRequest,
+  ExternalPromotionsProviderResponse,
+} from '../../../clients/provider'
+import type {
+  ApplyPromotionsResponse,
+  VTEXExternalPromotionsDataContract,
+} from '../../../clients/vtex-external-promotions-app'
+import {
+  DataContractType,
+  DataContractVersion,
+} from '../../../clients/vtex-external-promotions-app'
 
 interface CalculateExternalPromotionsRequest {
   sessionId: string
@@ -17,50 +27,77 @@ interface Item {
   sellingPrice: number
 }
 
-export async function calculate(ctx: Context, next: () => Promise<any>) {
-  const { sessionId, promotionalContext }: CalculateExternalPromotionsRequest = await json(ctx.req)
+export async function calculate(
+  ctx: Context,
+  next: () => Promise<ApplyPromotionsResponse>
+) {
+  const {
+    sessionId,
+    promotionalContext,
+  }: CalculateExternalPromotionsRequest = await json(ctx.req)
 
   const {
     clients: { provider, vtexExternalPromotionsApp },
   } = ctx
 
   const data: ExternalPromotionsProviderRequest = {
-    items: promotionalContext.items.map(item => ({
+    items: promotionalContext.items.map((item) => ({
       sku: item.id,
       price: item.sellingPrice,
-    }))
+    })),
   }
 
-  const externalPromotionsDataResult = await provider.calculateExternalPromotions(data)
-  if (externalPromotionsDataResult.isErr) {
-    console.error(externalPromotionsDataResult.error.message, { data, error: externalPromotionsDataResult.error })
-    ctx.status = 500
-    ctx.body = externalPromotionsDataResult.error.message
-    return await next()
-  }
+  return provider
+    .calculateExternalPromotions(data)
+    .then((externalPromotionsDataResult) => {
+      return vtexExternalPromotionsApp
+        .applyExternalPromotions(
+          transformToVTEXExternalPromotionsDataContract(
+            externalPromotionsDataResult,
+            sessionId
+          )
+        )
+        .then((applyExternalPromotionsResult) => {
+          // this may change when we implment the app on VTEX's side
+          ctx.status = 200
+          ctx.body = applyExternalPromotionsResult
 
-  const applyExternalPromotionsResult = await vtexExternalPromotionsApp.applyExternalPromotions(transformToVTEXExternalPromotionsDataContract(externalPromotionsDataResult.value, sessionId))
-  if (applyExternalPromotionsResult.isErr) {
-    console.error(applyExternalPromotionsResult.error.message, { data, error: applyExternalPromotionsResult.error })
-    ctx.status = 500
-    ctx.body = applyExternalPromotionsResult.error.message
-    return await next()
-  }
+          return next()
+        })
+        .catch((error) => {
+          const msg =
+            'an unexpected error occurred while applying external promotions'
 
-  // this may change when we implment the app on VTEX's side
-  ctx.status = 200
-  ctx.body = applyExternalPromotionsResult.value
+          console.error(msg, { data: externalPromotionsDataResult, error })
+          ctx.status = 500
+          ctx.body = msg
 
-  await next()
+          return next()
+        })
+    })
+    .catch((error) => {
+      const msg =
+        'an unexpected error occurred while calling the external provider to calculate promotions'
+
+      console.error(msg, { data, error })
+      ctx.status = 500
+      ctx.body = msg
+
+      return next()
+    })
 }
 
-function transformToVTEXExternalPromotionsDataContract(externalPromotions: ExternalPromotionsProviderResponse, sessionId: string): VTEXExternalPromotionsDataContract {
+function transformToVTEXExternalPromotionsDataContract(
+  externalPromotions: ExternalPromotionsProviderResponse,
+  sessionId: string
+): VTEXExternalPromotionsDataContract {
   const now = new Date()
+
   return {
     version: DataContractVersion.v1,
     type: DataContractType.page,
     exp: now.setHours(now.getHours() + 1), // this should be the unix time when the promotion becomes invalid,
-    sessionId: sessionId,
+    sessionId,
     promotions: externalPromotions.promotions,
   }
 }

@@ -1,7 +1,5 @@
-import { AppClient, InstanceOptions, IOContext } from '@vtex/api'
-
-import { Error, ErrorType } from '../utils/errors'
-import { Result } from '../utils/result'
+import type { InstanceOptions, IOContext } from '@vtex/api'
+import { AppClient } from '@vtex/api'
 
 export interface VTEXExternalPromotionsDataContract {
   version: DataContractVersion
@@ -12,16 +10,16 @@ export interface VTEXExternalPromotionsDataContract {
   promotions: Promotion[]
 }
 
-export enum DataContractVersion {
-  v1 = "v1"
+export const enum DataContractVersion {
+  v1 = 'v1',
 }
 
-export enum DataContractType {
-  cart = "cart",
-  page = "page",
+export const enum DataContractType {
+  cart = 'cart',
+  page = 'page',
 }
 
-interface Promotion {
+export interface Promotion {
   identifier: string
   effect: PromotionEffect
   scope: PromotionScope[]
@@ -37,9 +35,9 @@ interface PromotionEffectSettings {
   applyMode: PromotionEffectSettingsApplyMode
 }
 
-enum PromotionEffectSettingsApplyMode {
-  onEachItem = "OnEachItem",
-  sharedAmongItems = "SharedAmongItems",
+const enum PromotionEffectSettingsApplyMode {
+  onEachItem = 'OnEachItem',
+  sharedAmongItems = 'SharedAmongItems',
 }
 
 interface PromotionScope {
@@ -47,18 +45,22 @@ interface PromotionScope {
   quantity: number
 }
 
+export type ApplyPromotionsResponse = Record<string, unknown>
+
 export class VTEXExternalPromotionsApp extends AppClient {
   constructor(context: IOContext, options?: InstanceOptions) {
     // this will change when we implement the app on VTEX's side
     super('vtex.external-promotions-app@0.x', context, options)
   }
 
-  public async applyExternalPromotions(data: VTEXExternalPromotionsDataContract): Promise<Result<any, Error>> {
+  public applyExternalPromotions(data: VTEXExternalPromotionsDataContract) {
     // this may change when we implment the app on VTEX's side
-    return this.http.post<any>('/_v/promotions/external/apply', data, {
-      metric: 'apply-external-promotions',
-    })
-      .then(response => Result.ok<any, Error>(response))
-      .catch(error => Result.err<any, Error>(new Error(ErrorType.UnexpectedError, "an unexpected error occurred while applying external promotions", error)))
+    return this.http.post<ApplyPromotionsResponse>(
+      '/_v/promotions/external/apply',
+      data,
+      {
+        metric: 'apply-external-promotions',
+      }
+    )
   }
 }
