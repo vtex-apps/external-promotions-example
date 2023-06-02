@@ -6,7 +6,9 @@
   "description": "Reference app for handling external promotions in VTEX",
   "mustUpdateAt": "2018-01-04",
   "categories": [],
-  "dependencies": {},
+  "dependencies": {
+    "vtex.external-promotions-middleware": "0.x"
+  },
   "builders": {
     "node": "6.x",
     "docs": "0.x"
@@ -20,6 +22,9 @@
         "host": "myvtex.com",
         "path": "*"
       }
+    },
+    {
+      "name": "vtex.external-promotions-middleware:apply-external-promotions"
     },
     {
       "name": "colossus-fire-event"
