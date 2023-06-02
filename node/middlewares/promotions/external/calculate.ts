@@ -24,6 +24,8 @@ interface PromotionalContext {
 
 interface Item {
   id: string
+  quantity: number
+  seller: string
   sellingPrice: number
 }
 
@@ -53,8 +55,9 @@ export async function calculate(
       return vtexExternalPromotionsApp
         .applyExternalPromotions(
           transformToVTEXExternalPromotionsDataContract(
-            externalPromotionsDataResult,
-            sessionId
+            promotionalContext,
+            sessionId,
+            externalPromotionsDataResult
           )
         )
         .then((applyExternalPromotionsResult) => {
@@ -88,16 +91,26 @@ export async function calculate(
 }
 
 function transformToVTEXExternalPromotionsDataContract(
-  externalPromotions: ExternalPromotionsProviderResponse,
-  sessionId: string
+  promotionalContext: PromotionalContext,
+  sessionId: string,
+  externalPromotions: ExternalPromotionsProviderResponse
 ): VTEXExternalPromotionsDataContract {
   const now = new Date()
 
   return {
-    version: DataContractVersion.v1,
-    type: DataContractType.page,
-    exp: now.setHours(now.getHours() + 1), // this should be the unix time when the promotion becomes invalid,
-    sessionId,
-    promotions: externalPromotions.promotions,
+    items: promotionalContext.items.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      seller: item.seller,
+    })),
+    sessionId: sessionId,
+    externalPromotions: [
+      {
+        version: DataContractVersion.v1,
+        type: DataContractType.page,
+        exp: now.setHours(now.getHours() + 1), // this should be the unix time when the promotion becomes invalid,
+        promotions: externalPromotions.promotions,
+      },
+    ],
   }
 }

@@ -2,10 +2,21 @@ import type { InstanceOptions, IOContext } from '@vtex/api'
 import { AppClient } from '@vtex/api'
 
 export interface VTEXExternalPromotionsDataContract {
+  items: Item[]
+  sessionId: string
+  externalPromotions: ExternalPromotion[]
+}
+
+interface Item {
+  id: string
+  quantity: number
+  seller: string
+}
+
+interface ExternalPromotion {
   version: DataContractVersion
   exp: number
   type: DataContractType
-  sessionId: string
   cartHash?: string
   promotions: Promotion[]
 }
@@ -49,14 +60,13 @@ export type ApplyPromotionsResponse = Record<string, unknown>
 
 export class VTEXExternalPromotionsApp extends AppClient {
   constructor(context: IOContext, options?: InstanceOptions) {
-    // this will change when we implement the app on VTEX's side
-    super('vtex.external-promotions-app@0.x', context, options)
+    super('vtex.external-promotions-middleware@0.x', context, options)
   }
 
   public applyExternalPromotions(data: VTEXExternalPromotionsDataContract) {
     // this may change when we implment the app on VTEX's side
     return this.http.post<ApplyPromotionsResponse>(
-      '/_v/promotions/external/apply',
+      '/_v/promotions/external/apply/page',
       data,
       {
         metric: 'apply-external-promotions',
